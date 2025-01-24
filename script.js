@@ -1,85 +1,39 @@
-let player;
-const playPauseBtn = document.getElementById('playPauseBtn');
-const muteBtn = document.getElementById('muteBtn');
-const fullScreenBtn = document.getElementById('fullScreenBtn');
-const shareBtn = document.getElementById('shareBtn');
+const API_KEY = 'AIzaSyCSaVwvthRWkgKfbnr5t7AK8sDv7ia_jm8'; // আপনার YouTube API key
+const CHANNEL_ID = 'UCvMfE7iLpU4kFnQ1avkWzcg'; // চ্যানেল ID (shamsul_haque)
 
-// YouTube Video URLs
-const videoUrls = [
-    "https://www.youtube.com/embed/IExBivh96AE",
-    "https://www.youtube.com/embed/1ii-UaisDJ8",
-    "https://www.youtube.com/embed/w3A9r4v6Ui0",
-    "https://www.youtube.com/embed/9VbT3EErWxU",
-    "https://www.youtube.com/embed/trvhnFM1SQY"
-];
+const videoContainer = document.getElementById('videoContainer');
 
-// Initialize YouTube Player API
-function onYouTubeIframeAPIReady() {
-    player = new YT.Player('videoPlayer1', {
-        events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
+// YouTube API ব্যবহার করে চ্যানেলের ভিডিও লোড করা
+async function fetchVideos() {
+    const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=10`
+    );
+    const data = await response.json();
+
+    data.items.forEach((item) => {
+        if (item.id.kind === "youtube#video") {
+            const videoId = item.id.videoId;
+            const videoTitle = item.snippet.title;
+
+            // প্রতিটি ভিডিওর জন্য থাম্বনেইল ও প্লে অপশন তৈরি
+            const videoElement = document.createElement('div');
+            videoElement.innerHTML = `
+                <div class="video">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="https://www.youtube.com/embed/${videoId}" 
+                        title="${videoTitle}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                    <h3>${videoTitle}</h3>
+                </div>
+            `;
+            videoContainer.appendChild(videoElement);
         }
     });
 }
 
-// Player ready handler
-function onPlayerReady(event) {
-    console.log("Player is ready");
-
-    // Play/Pause Button
-    playPauseBtn.addEventListener('click', () => {
-        const state = player.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-            player.pauseVideo();
-            playPauseBtn.innerText = 'Play';
-        } else {
-            player.playVideo();
-            playPauseBtn.innerText = 'Pause';
-        }
-    });
-
-    // Mute/Unmute Button
-    muteBtn.addEventListener('click', () => {
-        if (player.isMuted()) {
-            player.unMute();
-            muteBtn.innerText = 'Mute';
-        } else {
-            player.mute();
-            muteBtn.innerText = 'Unmute';
-        }
-    });
-
-    // Full Screen Button
-    fullScreenBtn.addEventListener('click', () => {
-        const iframe = document.getElementById('videoPlayer1');
-        if (iframe.requestFullscreen) {
-            iframe.requestFullscreen();
-        } else if (iframe.mozRequestFullScreen) {
-            iframe.mozRequestFullScreen();
-        } else if (iframe.webkitRequestFullscreen) {
-            iframe.webkitRequestFullscreen();
-        }
-    });
-
-    // Share Button
-    shareBtn.addEventListener('click', () => {
-        const videoUrl = player.getVideoUrl();
-        alert(`Share this video: ${videoUrl}`);
-    });
-
-    // Thumbnails click event
-    document.querySelectorAll('.video-thumbnail').forEach((thumbnail, index) => {
-        thumbnail.addEventListener('click', () => {
-            player.loadVideoById(videoUrls[index].split('/').pop());
-            playPauseBtn.innerText = 'Pause';
-        });
-    });
-}
-
-// Player state change handler
-function onPlayerStateChange(event) {
-    if (event.data === YT.PlayerState.ENDED) {
-        playPauseBtn.innerText = 'Play';
-    }
-          }
+fetchVideos();
